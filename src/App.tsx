@@ -51,7 +51,7 @@ function App() {
   const [lastDetail, setLastDetail] = useState<AnalyzeResult | null>(null)
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory())
 
-  const latestRate = history[0]?.baldRate ?? null
+  const latestRate = history[0]?.fluffRate ?? null
 
   /** 初回で face-api をロード（失敗時はリトライ用に ensure を保持） */
   useEffect(() => {
@@ -137,7 +137,7 @@ function App() {
         return false
       }
 
-      const nextHist = appendHistory(res.baldRate)
+      const nextHist = appendHistory(res.fluffRate)
       setHistory(nextHist)
       setLastDetail(res)
       setPhase('idle')
@@ -184,7 +184,7 @@ function App() {
           setPhase('idle')
           return
         }
-        const nextHist = appendHistory(res.baldRate)
+        const nextHist = appendHistory(res.fluffRate)
         setHistory(nextHist)
         setLastDetail(res)
         setPhase('idle')
@@ -223,17 +223,17 @@ function App() {
     <div className="mx-auto max-w-xl px-4 pb-24 pt-8 sm:pt-14">
       <header className="mb-10 text-center">
         <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/85 px-4 py-1.5 text-xs font-medium tracking-wide text-slate-600 shadow-sm ring-1 ring-slate-200/70 backdrop-blur">
-          写真ベース／頭頂の質感読みから％換算した見ため指標（エンタメ目安）
+          写真ベース・頭頂の質感から算出／つるっぱげ寄り＝0％（エンタメ目安）
         </div>
         <h1 className="bg-gradient-to-r from-[#1e2846] via-[#3b4fa6] to-[#287a93] bg-clip-text font-display text-3xl font-bold tracking-tight text-transparent sm:text-4xl">
-          頭頂コンディション
+          ふさふさ率
         </h1>
         <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-slate-600">
           <strong className="font-semibold text-slate-700">
-            「どれだけ抜け感が増して見えるか」を、丁寧に言い換えた指標です。
+            「その写真ではどれだけボリューム・毛の質感が写って見えるか」を％にした指標です。
           </strong>
-          撮影データの質感だけを読み取り、その一枚で言う<strong className="font-semibold text-slate-700">ボリューム感／ツヤ感の気配</strong>
-          に近い状態を％で並べられるようにしました。ログ用途で、自分の頭頂部の様子と向き合うためのひとつの目安になります。
+          <strong className="font-semibold text-slate-700">つるっぱげに近い見え方を 0％</strong>
+          とし、質感・エッジ・コントラストが増えるほど数値が上がります。ログや気分転換の参考までにどうぞ。
         </p>
       </header>
 
@@ -296,7 +296,7 @@ function App() {
             <span className="text-lg" aria-hidden>
               ✂️
             </span>
-            今日の見ため％を算出
+            ふさふさ率を算出
           </button>
 
           <button
@@ -332,17 +332,17 @@ function App() {
               aria-hidden
             />
             <span>
-              解析中です…眉より上までの質感統計から、％にマッピングしています。
+              解析中です…眉より上の頭頂領域の質感から、ふさふさ率を計算しています。
             </span>
           </div>
         )}
 
         <div className="mt-8 grid gap-3">
           <div className="flex items-baseline justify-between gap-2">
-            <h2 className="text-[15px] font-semibold text-slate-800">最新の頭頂コンディション（見ため％）</h2>
+            <h2 className="text-[15px] font-semibold text-slate-800">最新のふさふさ率</h2>
             {lastDetail?.hairLikeness != null && phase !== 'analyzing' && (
               <span className="rounded-full bg-slate-900/85 px-2.5 py-0.5 text-[11px] font-medium text-teal-soft">
-                質感側の読み（補助） {(lastDetail.hairLikeness * 100).toFixed(0)}
+                質感スコア（補助・0–100） {(lastDetail.hairLikeness * 100).toFixed(0)}
               </span>
             )}
           </div>
@@ -367,20 +367,23 @@ function App() {
             </summary>
             <div className="space-y-3 pb-4 text-left text-sm leading-relaxed text-slate-600 [&_strong]:font-semibold [&_strong]:text-slate-800">
               <p>
-                ご自身の頭頂部がどれだけ「抜け感が増して見える状態」へ寄っているか、その<strong>見える印象を数字に寄せたざっくり指標です。</strong>{' '}
-                単体の％で医学的進行や「いく％薄くなっているか」を証明することは<strong>ありません。</strong>{' '}
-                複数枚を同じ環境・距離・角度ではかると自分のログとして意味が増えます。
+                <strong>ふさふさ率</strong>は、その<strong>一枚の写真だけ</strong>を見て、頭頂〜前髪寄りの画が<strong>
+                  「毛の細かい質感・ボリュームが写り込んでいるように見えるか」
+                </strong>
+                をアルゴリズムが分解した<strong>見え方の目安（0〜100％）</strong>です。<strong>つるっぱげに近いフラットな見え方は 0％側</strong>
+                に寄せています。医学的な発毛量や診断を意味するものではありません。同じ条件で複数枚撮るとログとして意味が増えます。
               </p>
               <p>
                 <strong>分析のしくみ：</strong>{' '}
-                ブラウザ上で<strong>お顔の位置を自動検知</strong>し、<strong>眉より少し上〜頭頂が写っている帯だけ</strong>を切り出します。そのグレースケールについて、細かく変化があるか（細い毛束・影の境目などをエッジで捉えるための差分・コントラスト）と、明暗の総体傾向を足しあわせ、
-                「この一枚では<strong>フラット〜なめらかな反射感</strong>が優勢だったか」「<strong>毛の質感の細やかさが優勢</strong>だったか」を内部でざっくり区別できるように％へ割り振っています。
+                ブラウザ上で<strong>お顔の位置を自動検知</strong>し、<strong>眉より少し上〜頭頂が写っている帯だけ</strong>を切り出します。グレースケールで<strong>
+                  細かい明暗の変化（エッジ密度）
+                </strong>
+                と<strong>コントラスト（輝度のばらつき）</strong>、および<strong>やや暗めの画かどうか（髪の影）</strong>を組み合わせ、質感が豊かに見えるほどスコアが上がるようにマッピングしています。
               </p>
               <p>
-                <strong>％としての読み方：</strong>{' '}
-                数値が<strong>高め</strong> → 質感側でいう細かさより、<strong>一枚の写真上ではスムーズで反射がまとわりやすい見え方側</strong>にアルゴリズムが分類しました（「頭皮寄り」の見える印象）。
-                数値が<strong>低め</strong> → <strong>毛の質感が細やかく写り込んだ側に分類しました</strong>（「それっぽい密度」の見える印象）。
-                逆光・フラッシュ・アングルを変えると数値も大きく動くため、その度に「今日の状態の参考」までに留められます。
+                <strong>％の読み方：</strong>{' '}
+                <strong>高め</strong> → その写真では<strong>毛束・影の細かさが読み取りやすく、ふんわりボリュームがあるように見える側</strong>へ分類しました。
+                <strong>低め</strong> → <strong>なめらか／頭皮がフラットに見えやすい側</strong>へ分類しました（照明・逆光・ブレで大きく変わります）。
               </p>
             </div>
           </details>
@@ -425,7 +428,7 @@ function App() {
       </section>
 
       <section className="mt-10 rounded-3xl border border-white/90 bg-white/70 p-6 shadow-lg shadow-teal-soft/25 ring-1 ring-teal-soft/35 backdrop-blur">
-        <h2 className="text-[15px] font-semibold text-slate-800">推移グラフ</h2>
+        <h2 className="text-[15px] font-semibold text-slate-800">ふさふさ率の推移</h2>
         <p className="mt-1 text-xs leading-relaxed text-slate-500">
           {history.length >= 5
             ? '生活リズムの変化の「目安」をつかめるよう、自動で過去ログを並べています（端末のみ保存）。'
@@ -449,13 +452,10 @@ function App() {
       </section>
 
       <footer className="mx-auto mt-12 max-w-md text-center text-[11px] leading-relaxed text-slate-500">
-        「頭頂コンディション」は、頭頂部画像の質感のみから算出した<strong className="font-medium text-slate-600">
-          写真ベース・見ための％指標です。
-        </strong>
-        「薄い・濃い」そのものというより、質感側に寄った見えかたに対するカウンターに近く、結果に対する確定的な評価は行いません。オープンモデルの読み込みは jsDelivr 経由の face-api の重みを利用します。
+        「ふさふさ率」は頭頂部写真の<strong className="font-medium text-slate-600">質感のみ</strong>から算出したエンタメ向けの指標です（つるっぱげ寄り＝0％）。医学的評価やAGA診断ではありません。face-api のモデルは jsDelivr 経由で読み込みます。
         <br />
         <span className="mt-1 inline-block opacity-85">
-          © {new Date().getFullYear()} 頭頂コンディション demo
+          © {new Date().getFullYear()} ふさふさ率チェック demo
         </span>
       </footer>
     </div>

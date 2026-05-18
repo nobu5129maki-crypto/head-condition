@@ -48,7 +48,7 @@ export function BaldTrendChart({ entries }: Props) {
         day: 'numeric',
         weekday: 'short',
       }) ?? '',
-    value: e.baldRate,
+    value: e.fluffRate,
   }))
 
   if (data.length < 2) {
@@ -93,7 +93,7 @@ export function BaldTrendChart({ entries }: Props) {
           />
           <Tooltip
             formatter={(value) =>
-              [`${typeof value === 'number' ? value : '--'}%`, '見ため％（目安）']
+              [`${typeof value === 'number' ? value : '--'}%`, 'ふさふさ率（目安）']
             }
             labelFormatter={(_, pts) =>
               (pts?.[0]?.payload as { label?: string } | undefined)?.label ?? ''

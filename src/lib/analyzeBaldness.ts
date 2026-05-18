@@ -8,8 +8,9 @@ export interface SegmentMetrics {
 }
 
 export interface AnalyzeResult {
-  baldRate: number /** 写真上の質感から換算した「見ため％」（高め＝フラット側の見える印象側。エンタメ／ログ目安） */
-  hairLikeness: number /** 0–1 */
+  /** つるっぱげ寄り＝0％〜ボリューム・質感が写り込む側＝100％（写真ベースのヒューリスティック／医学的診断ではありません） */
+  fluffRate: number
+  hairLikeness: number /** 0–1（内部の質感寄りスコアと同期） */
   metrics: SegmentMetrics
   browTopY: number
 }
@@ -101,24 +102,23 @@ function scalpMetricsSampled(grayRoi: Float32Array, rw: number, rh: number): Seg
   return { edgeDensity, luminanceVariance: Math.sqrt(Math.max(variance, 1e-6)), relativeDarkness }
 }
 
-/** 質感の統計情報から換算される「頭頂の見ため％」（エンタメ向けヒューリスティック／医学的％ではありません） */
-export function baldRateFromHairMetrics(m: SegmentMetrics): { hairLikeness: number; baldRate: number } {
+/** 質感の統計から「ふさふさ率」0–100（エンタメ向けヒューリスティック／医学的％ではありません） */
+export function baldRateFromHairMetrics(m: SegmentMetrics): { hairLikeness: number; fluffRate: number } {
   /** 強い細かい質感／コントラスト → ヘア寄り（数値調整済みヒューリスティック） */
   const edgeN = linearNorm(m.edgeDensity, 6.5, 26)
   const varN = linearNorm(m.luminanceVariance, 3.8, 16)
   const darkN = linearNorm(m.relativeDarkness, 0.12, 0.48)
 
   /** 暗さは単独より補助的に（照明でブレるため） */
-  const hairLikeness = clamp(
+  const rawHair = clamp(
     edgeN * 0.48 + varN * 0.41 + darkN * 0.11,
     0,
     1,
   )
-  /** ゆるい S カーブで極端な 0 / 100 を減らす */
-  const adjusted = clamp((hairLikeness - 0.5) * 1.06 + 0.5, 0, 1)
-  let baldRate = Math.round((1 - adjusted) * 100)
-  baldRate = clamp(baldRate, 3, 97)
-  return { hairLikeness: adjusted, baldRate }
+  /** ゆるい S カーブ（質感が乏しい＝0％側、ボリューム・細かい質感が写る＝100％側へ寄せる） */
+  const adjusted = clamp((rawHair - 0.5) * 1.06 + 0.5, 0, 1)
+  const fluffRate = Math.round(adjusted * 100)
+  return { hairLikeness: adjusted, fluffRate }
 }
 
 /**
@@ -155,10 +155,10 @@ export async function analyzeBaldnessFromCanvas(
 
   const gray = roiGray(canvas, roi)
   const metrics = scalpMetricsSampled(gray, roi.w, roi.h)
-  const { hairLikeness, baldRate } = baldRateFromHairMetrics(metrics)
+  const { hairLikeness, fluffRate } = baldRateFromHairMetrics(metrics)
 
   return {
-    baldRate,
+    fluffRate,
     hairLikeness,
     metrics,
     browTopY: browMedianY,
