@@ -1,6 +1,6 @@
 import * as faceapi from 'face-api.js'
 
-/** 頭頂部ROIと眉位置から算出したヘア質感スコア */
+/** 前髪・生え際・こめかみなどから算出したヘア質感スコア */
 export interface SegmentMetrics {
   edgeDensity: number
   luminanceVariance: number
@@ -24,25 +24,110 @@ function linearNorm(x: number, lo: number, hi: number): number {
   return clamp((x - lo) / (hi - lo), 0, 1)
 }
 
-/** 頭頂部（眉より上〜撮影された髪／頭皮）矩形 */
-function scalpRoi(
+type Rect = { x: number; y: number; w: number; h: number }
+type WeightedRoi = Rect & { weight: number }
+
+function clampRect(iw: number, ih: number, r: Rect): Rect | null {
+  const x = Math.floor(clamp(r.x, 0, iw - 8))
+  const y = Math.floor(clamp(r.y, 0, ih - 8))
+  const w = Math.ceil(clamp(r.x + r.w, x + 8, iw)) - x
+  const h = Math.ceil(clamp(r.y + r.h, y + 8, ih)) - y
+  if (w < 12 || h < 12) return null
+  return { x, y, w, h }
+}
+
+/**
+ * 正面撮影でも安定するよう、頭頂だけでなく
+ * 前髪・生え際・こめかみ（＋写っていれば頭頂付近）を複数領域で切り出す。
+ */
+function hairTextureRois(
   iw: number,
   ih: number,
   faceBox: faceapi.Box,
   browMedianY: number,
-): { x: number; y: number; w: number; h: number } | null {
+): WeightedRoi[] {
   const faceH = faceBox.height
-  const xc = faceBox.x + faceBox.width / 2
-  const halfW = (faceBox.width * 1.05) / 2
-  const x0 = Math.floor(clamp(xc - halfW, 0, iw - 8))
-  const x1 = Math.ceil(clamp(xc + halfW, x0 + 8, iw))
-  const yBottom = Math.floor(clamp(browMedianY - 8, 8, ih))
-  const yTop = clamp(Math.floor(faceBox.top - faceH * 0.82), 0, yBottom - 24)
-  const w = x1 - x0
-  const h = yBottom - yTop
+  const faceW = faceBox.width
+  const left = faceBox.x
+  const right = faceBox.x + faceW
+  const top = faceBox.y
+  const browLine = Math.floor(clamp(browMedianY - 5, 8, ih))
 
-  if (h < 20 || w < 24) return null
-  return { x: x0, y: yTop, w, h }
+  const rois: WeightedRoi[] = []
+
+  const foreheadTop = Math.max(0, Math.floor(top - faceH * 0.35))
+  const forehead = clampRect(iw, ih, {
+    x: left + faceW * 0.15,
+    y: foreheadTop,
+    w: faceW * 0.7,
+    h: browLine - foreheadTop,
+  })
+  if (forehead && forehead.h >= 14) {
+    rois.push({ ...forehead, weight: 0.45 })
+  }
+
+  const templeTop = Math.max(0, Math.floor(top - faceH * 0.18))
+  const templeH = browLine - templeTop
+  const leftTemple = clampRect(iw, ih, {
+    x: left - faceW * 0.28,
+    y: templeTop,
+    w: faceW * 0.38,
+    h: templeH,
+  })
+  if (leftTemple && leftTemple.h >= 14) {
+    rois.push({ ...leftTemple, weight: 0.22 })
+  }
+
+  const rightTemple = clampRect(iw, ih, {
+    x: right - faceW * 0.1,
+    y: templeTop,
+    w: faceW * 0.38,
+    h: templeH,
+  })
+  if (rightTemple && rightTemple.h >= 14) {
+    rois.push({ ...rightTemple, weight: 0.22 })
+  }
+
+  if (top > faceH * 0.1) {
+    const crown = clampRect(iw, ih, {
+      x: left + faceW * 0.2,
+      y: 0,
+      w: faceW * 0.6,
+      h: Math.floor(top - 4),
+    })
+    if (crown && crown.h >= 14) {
+      rois.push({ ...crown, weight: 0.18 })
+    }
+  }
+
+  if (rois.length === 0) {
+    const fallback = clampRect(iw, ih, {
+      x: left + faceW * 0.05,
+      y: 0,
+      w: faceW * 0.9,
+      h: browLine,
+    })
+    if (fallback) return [{ ...fallback, weight: 1 }]
+  }
+
+  return rois
+}
+
+function mergeWeightedMetrics(items: { metrics: SegmentMetrics; weight: number }[]): SegmentMetrics {
+  const totalW = items.reduce((s, i) => s + i.weight, 0)
+  if (totalW <= 0) {
+    return { edgeDensity: 0, luminanceVariance: 0, relativeDarkness: 0 }
+  }
+  let edge = 0
+  let lum = 0
+  let dark = 0
+  for (const { metrics, weight } of items) {
+    const w = weight / totalW
+    edge += metrics.edgeDensity * w
+    lum += metrics.luminanceVariance * w
+    dark += metrics.relativeDarkness * w
+  }
+  return { edgeDensity: edge, luminanceVariance: lum, relativeDarkness: dark }
 }
 
 function grayscaleFromImageData(data: Uint8ClampedArray, w: number, h: number) {
@@ -123,7 +208,7 @@ export function baldRateFromHairMetrics(m: SegmentMetrics): { hairLikeness: numb
 
 /**
  * 画像全体を canvas に書き込んだ状態で検出。
- * 「眉より上」を頭頂部とみなしテクスチャで推定（医療診断ではありません）。
+ * 正面でも写りやすい前髪・生え際・こめかみを中心にテクスチャで推定（医療診断ではありません）。
  */
 export async function analyzeBaldnessFromCanvas(
   canvas: HTMLCanvasElement,
@@ -139,28 +224,35 @@ export async function analyzeBaldnessFromCanvas(
     .withFaceLandmarks()
 
   if (!det) {
-    return { error: '顔を検出できませんでした。正面を向いて、頭頂部が画面に入る距離で撮り直してください。' }
+    return {
+      error: '顔を検出できませんでした。正面を向いて、顔と前髪・生え際が画面に入る距離で撮り直してください。',
+    }
   }
 
   const lm = det.landmarks.positions
-  /** 両眉のアーク（17〜26）。上寄りになるよう小さめインデックス中心に寄せてもよいが、平均で安定 */
   const browPts = lm.slice(17, 27)
   const browMedianY = browPts.reduce((acc, p) => acc + p.y, 0) / browPts.length
 
   const box = det.detection.box
-  const roi = scalpRoi(iw, ih, box, browMedianY)
-  if (!roi) {
-    return { error: '頭頂部の判定領域を切り出せませんでした。もう少し髪まで写るようにしましょう。' }
+  const rois = hairTextureRois(iw, ih, box, browMedianY)
+  if (rois.length === 0) {
+    return {
+      error: '髪の判定領域を切り出せませんでした。前髪・生え際が写るように、少し引きの構図でお試しください。',
+    }
   }
 
-  const gray = roiGray(canvas, roi)
-  const metrics = scalpMetricsSampled(gray, roi.w, roi.h)
-  const { hairLikeness, fluffRate } = baldRateFromHairMetrics(metrics)
+  const merged = mergeWeightedMetrics(
+    rois.map((roi) => ({
+      weight: roi.weight,
+      metrics: scalpMetricsSampled(roiGray(canvas, roi), roi.w, roi.h),
+    })),
+  )
+  const { hairLikeness, fluffRate } = baldRateFromHairMetrics(merged)
 
   return {
     fluffRate,
     hairLikeness,
-    metrics,
+    metrics: merged,
     browTopY: browMedianY,
   }
 }

@@ -223,7 +223,7 @@ function App() {
     <div className="mx-auto max-w-xl px-4 pb-24 pt-8 sm:pt-14">
       <header className="mb-10 text-center">
         <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/85 px-4 py-1.5 text-xs font-medium tracking-wide text-slate-600 shadow-sm ring-1 ring-slate-200/70 backdrop-blur">
-          写真ベース・頭頂の質感から算出／ボリューム控えめに見える＝0％（エンタメ目安）
+          写真ベース・前髪まわりの質感から算出／ボリューム控えめに見える＝0％（エンタメ目安）
         </div>
         <h1 className="bg-gradient-to-r from-[#1e2846] via-[#3b4fa6] to-[#287a93] bg-clip-text font-display text-3xl font-bold tracking-tight text-transparent sm:text-4xl">
           ふさふさ率
@@ -255,17 +255,33 @@ function App() {
         <div className="relative overflow-hidden rounded-2xl bg-slate-950/5 ring-1 ring-slate-200/80">
           <video
             ref={videoRef}
-            className={`aspect-video w-full object-cover ${camOpen ? 'block opacity-90' : 'hidden'}`}
+            className={`aspect-[3/4] w-full object-cover object-[center_18%] ${camOpen ? 'block opacity-90' : 'hidden'}`}
             playsInline
             muted
             autoPlay
           />
+          {camOpen && (
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center pt-[5%]">
+              <div
+                className="w-[74%] rounded-2xl border-2 border-dashed border-white/55 bg-sky-400/10"
+                style={{ aspectRatio: '5 / 2' }}
+                aria-hidden
+              />
+              <p className="mt-1 text-[11px] font-semibold text-white drop-shadow-md">前髪・生え際</p>
+              <div
+                className="mt-[8%] w-[56%] rounded-[999px] border-2 border-white/60"
+                style={{ aspectRatio: '3 / 4' }}
+                aria-hidden
+              />
+              <p className="mt-1 text-[11px] font-semibold text-white drop-shadow-md">顔（正面）</p>
+            </div>
+          )}
           {!camOpen && (
-            <div className="aspect-video grid place-items-center bg-gradient-to-b from-slate-100 to-teal-soft/55">
+            <div className="aspect-[3/4] grid place-items-center bg-gradient-to-b from-slate-100 to-teal-soft/55">
               <div className="text-center px-6">
                 <p className="text-sm font-semibold text-slate-700">カメラ待機中</p>
                 <p className="mt-2 text-xs leading-relaxed text-slate-500">
-                  「カメラを起動」を押してから判定してください。
+                  「カメラを起動」を押してください。頭頂部まで写さなくても大丈夫です。
                 </p>
               </div>
             </div>
@@ -275,9 +291,15 @@ function App() {
         <div className="mt-4 rounded-xl border border-sky-100/90 bg-sky-50/50 px-4 py-3.5 text-sm leading-relaxed text-slate-600">
           <p className="font-semibold text-slate-800">📷 カメラで撮るときのコツ</p>
           <ul className="mt-2 list-disc space-y-1 pl-[1.05rem] text-[13px]">
-            <li>明るい場所で、窓や照明の<strong className="font-medium text-slate-700">正面</strong>から撮る</li>
-            <li>顔と<strong className="font-medium text-slate-700">頭頂〜前髪</strong>が画面に入る距離にする</li>
-            <li>正面を向き、頭を大きく傾けない</li>
+            <li>
+              スマホを<strong className="font-medium text-slate-700">目の高さより少し上</strong>
+              に持ち、上の点線枠に前髪・生え際が入るように
+            </li>
+            <li>
+              顔は下の楕円枠に合わせ、<strong className="font-medium text-slate-700">正面のまま</strong>
+              撮る（頭頂部まで写す必要はありません）
+            </li>
+            <li>明るい場所で、窓や照明の正面から撮る</li>
             <li>「カメラを起動」→ 構図を合わせて「ふさふさ率を算出」を押す</li>
           </ul>
         </div>
@@ -342,7 +364,7 @@ function App() {
               aria-hidden
             />
             <span>
-              解析中です…眉より上の頭頂領域の質感から、ふさふさ率を計算しています。
+              解析中です…前髪・生え際・こめかみの質感から、ふさふさ率を計算しています。
             </span>
           </div>
         )}
@@ -377,7 +399,7 @@ function App() {
             </summary>
             <div className="space-y-3 pb-4 text-left text-sm leading-relaxed text-slate-600 [&_strong]:font-semibold [&_strong]:text-slate-800">
               <p>
-                <strong>ふさふさ率</strong>は、その<strong>一枚の写真だけ</strong>を見て、頭頂〜前髪寄りの画が<strong>
+                <strong>ふさふさ率</strong>は、その<strong>一枚の写真だけ</strong>を見て、前髪・生え際・こめかみ付近の画が<strong>
                   「毛の細かい質感・ボリュームが写り込んでいるように見えるか」
                 </strong>
                 をアルゴリズムが分解した<strong>見え方の目安（0〜100％）</strong>です。<strong>なめらかでボリュームが控えめに見える状態は 0％側</strong>
@@ -385,7 +407,7 @@ function App() {
               </p>
               <p>
                 <strong>分析のしくみ：</strong>{' '}
-                ブラウザ上で<strong>お顔の位置を自動検知</strong>し、<strong>眉より少し上〜頭頂が写っている帯だけ</strong>を切り出します。グレースケールで<strong>
+                ブラウザ上で<strong>お顔の位置を自動検知</strong>し、<strong>前髪・生え際・こめかみ（写っていれば頭頂付近も）</strong>を切り出します。グレースケールで<strong>
                   細かい明暗の変化（エッジ密度）
                 </strong>
                 と<strong>コントラスト（輝度のばらつき）</strong>、および<strong>やや暗めの画かどうか（髪の影）</strong>を組み合わせ、質感が豊かに見えるほどスコアが上がるようにマッピングしています。
@@ -415,8 +437,8 @@ function App() {
               <div>
                 <p className="font-semibold text-slate-800">撮影構図</p>
                 <ul className="mt-2 list-disc space-y-1 pl-[1.05rem]">
-                  <li>前髪ライン〜頭頂〜分け目付近まで写るように</li>
-                  <li>できるだけ頭を傾げず<b className="font-medium text-slate-700">正面</b>構図</li>
+                  <li>前髪ライン・生え際・こめかみが写るように（頭頂部までは不要）</li>
+                  <li>スマホは目の高さより少し上から、<b className="font-medium text-slate-700">正面</b>構図</li>
                   <li>ズーム過多で質感情報がなくなるので、少し離れてシャープ確保</li>
                   <li>背景に白〜肌色の広い無地が頭に重なると読み込みズレがあるので避ける</li>
                 </ul>
@@ -462,7 +484,7 @@ function App() {
       </section>
 
       <footer className="mx-auto mt-12 max-w-md text-center text-[11px] leading-relaxed text-slate-500">
-        「ふさふさ率」は頭頂部写真の<strong className="font-medium text-slate-600">質感のみ</strong>から算出したエンタメ向けの指標です（ボリューム控えめに見える＝0％）。医学的評価や診断ではありません。face-api のモデルは jsDelivr 経由で読み込みます。
+        「ふさふさ率」は前髪まわりの写真の<strong className="font-medium text-slate-600">質感のみ</strong>から算出したエンタメ向けの指標です（ボリューム控えめに見える＝0％）。医学的評価や診断ではありません。face-api のモデルは jsDelivr 経由で読み込みます。
         <br />
         <span className="mt-1 inline-block opacity-85">
           © {new Date().getFullYear()} ふさふさ率チェック demo
