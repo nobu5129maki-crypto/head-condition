@@ -223,7 +223,7 @@ function App() {
     <div className="mx-auto max-w-xl px-4 pb-24 pt-8 sm:pt-14">
       <header className="mb-10 text-center">
         <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/85 px-4 py-1.5 text-xs font-medium tracking-wide text-slate-600 shadow-sm ring-1 ring-slate-200/70 backdrop-blur">
-          写真ベース・頭頂の質感から算出／つるっぱげ寄り＝0％（エンタメ目安）
+          写真ベース・頭頂の質感から算出／ボリューム控えめに見える＝0％（エンタメ目安）
         </div>
         <h1 className="bg-gradient-to-r from-[#1e2846] via-[#3b4fa6] to-[#287a93] bg-clip-text font-display text-3xl font-bold tracking-tight text-transparent sm:text-4xl">
           ふさふさ率
@@ -232,8 +232,8 @@ function App() {
           <strong className="font-semibold text-slate-700">
             「その写真ではどれだけボリューム・毛の質感が写って見えるか」を％にした指標です。
           </strong>
-          <strong className="font-semibold text-slate-700">つるっぱげに近い見え方を 0％</strong>
-          とし、質感・エッジ・コントラストが増えるほど数値が上がります。ログや気分転換の参考までにどうぞ。
+          <strong className="font-semibold text-slate-700">髪のボリュームが控えめに見える状態を 0％</strong>
+          とし、質感・ふんわり感が写り込むほど数値が上がります。ログや気分転換の参考までにどうぞ。
         </p>
       </header>
 
@@ -265,11 +265,21 @@ function App() {
               <div className="text-center px-6">
                 <p className="text-sm font-semibold text-slate-700">カメラ待機中</p>
                 <p className="mt-2 text-xs leading-relaxed text-slate-500">
-                  「カメラを起動」を押してから判定してください。頭頂部〜前髪が十分写る構図にすると結果が安定します。
+                  「カメラを起動」を押してから判定してください。
                 </p>
               </div>
             </div>
           )}
+        </div>
+
+        <div className="mt-4 rounded-xl border border-sky-100/90 bg-sky-50/50 px-4 py-3.5 text-sm leading-relaxed text-slate-600">
+          <p className="font-semibold text-slate-800">📷 カメラで撮るときのコツ</p>
+          <ul className="mt-2 list-disc space-y-1 pl-[1.05rem] text-[13px]">
+            <li>明るい場所で、窓や照明の<strong className="font-medium text-slate-700">正面</strong>から撮る</li>
+            <li>顔と<strong className="font-medium text-slate-700">頭頂〜前髪</strong>が画面に入る距離にする</li>
+            <li>正面を向き、頭を大きく傾けない</li>
+            <li>「カメラを起動」→ 構図を合わせて「ふさふさ率を算出」を押す</li>
+          </ul>
         </div>
 
         <canvas ref={canvasRef} className="hidden" />
@@ -370,8 +380,8 @@ function App() {
                 <strong>ふさふさ率</strong>は、その<strong>一枚の写真だけ</strong>を見て、頭頂〜前髪寄りの画が<strong>
                   「毛の細かい質感・ボリュームが写り込んでいるように見えるか」
                 </strong>
-                をアルゴリズムが分解した<strong>見え方の目安（0〜100％）</strong>です。<strong>つるっぱげに近いフラットな見え方は 0％側</strong>
-                に寄せています。医学的な発毛量や診断を意味するものではありません。同じ条件で複数枚撮るとログとして意味が増えます。
+                をアルゴリズムが分解した<strong>見え方の目安（0〜100％）</strong>です。<strong>なめらかでボリュームが控えめに見える状態は 0％側</strong>
+                に寄せています。医学的な毛量や診断を意味するものではありません。同じ条件で複数枚撮るとログとして意味が増えます。
               </p>
               <p>
                 <strong>分析のしくみ：</strong>{' '}
@@ -383,7 +393,7 @@ function App() {
               <p>
                 <strong>％の読み方：</strong>{' '}
                 <strong>高め</strong> → その写真では<strong>毛束・影の細かさが読み取りやすく、ふんわりボリュームがあるように見える側</strong>へ分類しました。
-                <strong>低め</strong> → <strong>なめらか／頭皮がフラットに見えやすい側</strong>へ分類しました（照明・逆光・ブレで大きく変わります）。
+                <strong>低め</strong> → <strong>なめらかで、ふんわり感が控えめに見える側</strong>へ分類しました（照明・逆光・ブレで大きく変わります）。
               </p>
             </div>
           </details>
@@ -415,11 +425,11 @@ function App() {
                 <p className="font-semibold text-slate-800">免責事項</p>
                 <p className="mt-2">
                   <strong className="font-semibold text-slate-800">
-                    薄毛進行そのものや AGA を診断できる医薬・アプリ機能ではなく、頭皮の状態を断定する製品でもありません。
+                    髪の状態を診断できる医療機器やアプリではありません。
                   </strong>
                   質感のみをヒューリスティックで換算しているエンタメ・セルフラグ用途であり、結果はあくまで目安です。
-                  はっきりとした症状や不安がある場合は<strong className="font-semibold text-slate-800">皮膚科・専門医</strong>
-                  で受診されてください。
+                  気になることがある場合は<strong className="font-semibold text-slate-800">皮膚科・専門医</strong>
+                  へ相談してください。
                 </p>
               </div>
             </div>
@@ -452,7 +462,7 @@ function App() {
       </section>
 
       <footer className="mx-auto mt-12 max-w-md text-center text-[11px] leading-relaxed text-slate-500">
-        「ふさふさ率」は頭頂部写真の<strong className="font-medium text-slate-600">質感のみ</strong>から算出したエンタメ向けの指標です（つるっぱげ寄り＝0％）。医学的評価やAGA診断ではありません。face-api のモデルは jsDelivr 経由で読み込みます。
+        「ふさふさ率」は頭頂部写真の<strong className="font-medium text-slate-600">質感のみ</strong>から算出したエンタメ向けの指標です（ボリューム控えめに見える＝0％）。医学的評価や診断ではありません。face-api のモデルは jsDelivr 経由で読み込みます。
         <br />
         <span className="mt-1 inline-block opacity-85">
           © {new Date().getFullYear()} ふさふさ率チェック demo

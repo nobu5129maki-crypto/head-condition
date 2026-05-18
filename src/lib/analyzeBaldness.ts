@@ -8,7 +8,7 @@ export interface SegmentMetrics {
 }
 
 export interface AnalyzeResult {
-  /** つるっぱげ寄り＝0％〜ボリューム・質感が写り込む側＝100％（写真ベースのヒューリスティック／医学的診断ではありません） */
+  /** ボリューム控えめに見える＝0％〜質感・ふんわり感が写り込む側＝100％（写真ベースのヒューリスティック／医学的診断ではありません） */
   fluffRate: number
   hairLikeness: number /** 0–1（内部の質感寄りスコアと同期） */
   metrics: SegmentMetrics
@@ -96,7 +96,7 @@ function scalpMetricsSampled(grayRoi: Float32Array, rw: number, rh: number): Seg
 
   const variance = varSum / Math.max(edgeSteps, 1)
   const edgeDensity = edgeSum / Math.max(edgeSteps, 1)
-  /** 暗いヘアほど値が高い（肌・薄毛で明るめなら低下） */
+  /** 暗いヘアほど値が高い（明るめに写ると低下） */
   const relativeDarkness = 1 - mean / 255
 
   return { edgeDensity, luminanceVariance: Math.sqrt(Math.max(variance, 1e-6)), relativeDarkness }
