@@ -13,17 +13,40 @@ interface Props {
   entries: HistoryEntry[]
 }
 
-/** グラフは古い順（左→右） */
-export function BaldTrendChart({ entries }: Props) {
-  const asc = [...entries].sort((a, b) => a.ts - b.ts)
-  const data = asc.map((e, i) => ({
-    idx: i + 1,
-    label:
-      new Date(e.ts).toLocaleDateString('ja-JP', {
+/** 横軸は日付のみ（時刻は付けない） */
+function formatAxisDate(ts: number, timeSpanMs: number): string {
+  const d = new Date(ts)
+  /** およそ 400 日超と年がまたがるときは年を明示 */
+  if (timeSpanMs > 400 * 24 * 3600 * 1000) {
+    return (
+      d.toLocaleDateString('ja-JP', {
+        year: 'numeric',
         month: 'numeric',
         day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
+      }) ?? ''
+    )
+  }
+  return (
+    d.toLocaleDateString('ja-JP', {
+      month: 'numeric',
+      day: 'numeric',
+    }) ?? ''
+  )
+}
+
+/** グラフは古い順（左→右）、横軸は日付（時系列） */
+export function BaldTrendChart({ entries }: Props) {
+  const asc = [...entries].sort((a, b) => a.ts - b.ts)
+  const span = asc.length >= 2 ? asc[asc.length - 1].ts - asc[0].ts : 0
+
+  const data = asc.map((e) => ({
+    ts: e.ts,
+    label:
+      new Date(e.ts).toLocaleDateString('ja-JP', {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        weekday: 'short',
       }) ?? '',
     value: e.baldRate,
   }))
@@ -39,7 +62,7 @@ export function BaldTrendChart({ entries }: Props) {
   return (
     <div className="h-56 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 10, right: 10, bottom: 0, left: -16 }}>
+        <AreaChart data={data} margin={{ top: 10, right: 12, bottom: 28, left: 14 }}>
           <defs>
             <linearGradient id="scalpConditionGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="oklch(0.76 0.16 248)" stopOpacity={0.45} />
@@ -48,15 +71,29 @@ export function BaldTrendChart({ entries }: Props) {
           </defs>
           <CartesianGrid strokeDasharray="4 10" stroke="oklch(0.92 0.01 245)" vertical={false} />
           <XAxis
-            dataKey="idx"
-            tick={{ fill: '#64748b', fontSize: 11 }}
-            hide={false}
-            tickMargin={10}
+            dataKey="ts"
+            type="number"
+            scale="time"
+            domain={['dataMin', 'dataMax']}
+            tickFormatter={(v) => formatAxisDate(typeof v === 'number' ? v : Number(v), span)}
+            tick={{ fill: '#64748b', fontSize: 10 }}
+            tickMargin={8}
+            minTickGap={18}
+            angle={-18}
+            textAnchor="end"
+            height={46}
           />
-          <YAxis domain={[0, 100]} width={42} tick={{ fill: '#64748b', fontSize: 11 }} unit="%" />
+          <YAxis
+            domain={[0, 100]}
+            width={54}
+            tick={{ fill: '#64748b', fontSize: 11 }}
+            tickMargin={4}
+            axisLine={false}
+            unit="%"
+          />
           <Tooltip
             formatter={(value) =>
-              [`${typeof value === 'number' ? value : '--'}%`, '頭頂コンディション']
+              [`${typeof value === 'number' ? value : '--'}%`, '見ため％（目安）']
             }
             labelFormatter={(_, pts) =>
               (pts?.[0]?.payload as { label?: string } | undefined)?.label ?? ''

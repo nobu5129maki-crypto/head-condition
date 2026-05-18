@@ -8,7 +8,7 @@ export interface SegmentMetrics {
 }
 
 export interface AnalyzeResult {
-  baldRate: number /** 0–100、頭頂コンディション値（高め＝質感よりスキン寄りの見た目。エンタメ目安） */
+  baldRate: number /** 写真上の質感から換算した「見ため％」（高め＝フラット側の見える印象側。エンタメ／ログ目安） */
   hairLikeness: number /** 0–1 */
   metrics: SegmentMetrics
   browTopY: number
@@ -101,7 +101,7 @@ function scalpMetricsSampled(grayRoi: Float32Array, rw: number, rh: number): Seg
   return { edgeDensity, luminanceVariance: Math.sqrt(Math.max(variance, 1e-6)), relativeDarkness }
 }
 
-/** 質感〜頭頂コンディション指標％（経験的レンジ。エンタメ向け調整済みの粗いマッピング） */
+/** 質感の統計情報から換算される「頭頂の見ため％」（エンタメ向けヒューリスティック／医学的％ではありません） */
 export function baldRateFromHairMetrics(m: SegmentMetrics): { hairLikeness: number; baldRate: number } {
   /** 強い細かい質感／コントラスト → ヘア寄り（数値調整済みヒューリスティック） */
   const edgeN = linearNorm(m.edgeDensity, 6.5, 26)

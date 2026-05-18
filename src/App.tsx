@@ -223,16 +223,17 @@ function App() {
     <div className="mx-auto max-w-xl px-4 pb-24 pt-8 sm:pt-14">
       <header className="mb-10 text-center">
         <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/85 px-4 py-1.5 text-xs font-medium tracking-wide text-slate-600 shadow-sm ring-1 ring-slate-200/70 backdrop-blur">
-          AI（エッジ質感ヒューリスティック）
+          写真ベース／頭頂の質感読みから％換算した見ため指標（エンタメ目安）
         </div>
         <h1 className="bg-gradient-to-r from-[#1e2846] via-[#3b4fa6] to-[#287a93] bg-clip-text font-display text-3xl font-bold tracking-tight text-transparent sm:text-4xl">
           頭頂コンディション
         </h1>
         <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-slate-600">
-          顔検出<span className="text-slate-500"> × </span>
-          眉の上の質感パターンから、そのときの<strong className="font-semibold text-slate-700">頭頂コンディション（見た目の粗いスコア）</strong>
-          を表示します。白髪トラッカーと同様、<strong className="font-semibold text-slate-700">日常的なチェック用途</strong>
-          向けです。
+          <strong className="font-semibold text-slate-700">
+            「どれだけ抜け感が増して見えるか」を、丁寧に言い換えた指標です。
+          </strong>
+          撮影データの質感だけを読み取り、その一枚で言う<strong className="font-semibold text-slate-700">ボリューム感／ツヤ感の気配</strong>
+          に近い状態を％で並べられるようにしました。ログ用途で、自分の頭頂部の様子と向き合うためのひとつの目安になります。
         </p>
       </header>
 
@@ -295,7 +296,7 @@ function App() {
             <span className="text-lg" aria-hidden>
               ✂️
             </span>
-            今日のコンディションを判定
+            今日の見ため％を算出
           </button>
 
           <button
@@ -330,16 +331,18 @@ function App() {
               className="inline-block h-8 w-8 shrink-0 animate-spin rounded-full border-4 border-teal-soft/40 border-l-[#3d67c4] border-t-[#3496b8]"
               aria-hidden
             />
-            <span>解析中です…頭頂部のテクスチャを評価しています</span>
+            <span>
+              解析中です…眉より上までの質感統計から、％にマッピングしています。
+            </span>
           </div>
         )}
 
         <div className="mt-8 grid gap-3">
           <div className="flex items-baseline justify-between gap-2">
-            <h2 className="text-[15px] font-semibold text-slate-800">最新の頭頂コンディション</h2>
+            <h2 className="text-[15px] font-semibold text-slate-800">最新の頭頂コンディション（見ため％）</h2>
             {lastDetail?.hairLikeness != null && phase !== 'analyzing' && (
               <span className="rounded-full bg-slate-900/85 px-2.5 py-0.5 text-[11px] font-medium text-teal-soft">
-                質感インデックス {(lastDetail.hairLikeness * 100).toFixed(0)}
+                質感側の読み（補助） {(lastDetail.hairLikeness * 100).toFixed(0)}
               </span>
             )}
           </div>
@@ -356,6 +359,31 @@ function App() {
             </div>
             <span className="pb-4 text-xl font-semibold text-white">%</span>
           </div>
+
+          <details className="group mt-4 rounded-xl border border-blue-100/90 bg-blue-50/40 px-5 py-2 text-[13px] text-slate-700 backdrop-blur">
+            <summary className="cursor-pointer py-3 font-semibold text-slate-900 outline-none transition group-open:pb-2">
+              この％は具体的に何を示していますか？&nbsp;
+              <span className="font-normal text-slate-600">▼</span>
+            </summary>
+            <div className="space-y-3 pb-4 text-left text-sm leading-relaxed text-slate-600 [&_strong]:font-semibold [&_strong]:text-slate-800">
+              <p>
+                ご自身の頭頂部がどれだけ「抜け感が増して見える状態」へ寄っているか、その<strong>見える印象を数字に寄せたざっくり指標です。</strong>{' '}
+                単体の％で医学的進行や「いく％薄くなっているか」を証明することは<strong>ありません。</strong>{' '}
+                複数枚を同じ環境・距離・角度ではかると自分のログとして意味が増えます。
+              </p>
+              <p>
+                <strong>分析のしくみ：</strong>{' '}
+                ブラウザ上で<strong>お顔の位置を自動検知</strong>し、<strong>眉より少し上〜頭頂が写っている帯だけ</strong>を切り出します。そのグレースケールについて、細かく変化があるか（細い毛束・影の境目などをエッジで捉えるための差分・コントラスト）と、明暗の総体傾向を足しあわせ、
+                「この一枚では<strong>フラット〜なめらかな反射感</strong>が優勢だったか」「<strong>毛の質感の細やかさが優勢</strong>だったか」を内部でざっくり区別できるように％へ割り振っています。
+              </p>
+              <p>
+                <strong>％としての読み方：</strong>{' '}
+                数値が<strong>高め</strong> → 質感側でいう細かさより、<strong>一枚の写真上ではスムーズで反射がまとわりやすい見え方側</strong>にアルゴリズムが分類しました（「頭皮寄り」の見える印象）。
+                数値が<strong>低め</strong> → <strong>毛の質感が細やかく写り込んだ側に分類しました</strong>（「それっぽい密度」の見える印象）。
+                逆光・フラッシュ・アングルを変えると数値も大きく動くため、その度に「今日の状態の参考」までに留められます。
+              </p>
+            </div>
+          </details>
 
           <details className="group mt-6 rounded-xl border border-slate-200/95 bg-teal-soft/45 px-5 py-2 text-[13px] text-slate-700">
             <summary className="cursor-pointer py-3 font-semibold text-slate-800 outline-none transition group-open:pb-2">
@@ -384,9 +412,11 @@ function App() {
                 <p className="font-semibold text-slate-800">免責事項</p>
                 <p className="mt-2">
                   <strong className="font-semibold text-slate-800">
-                    頭頂部の状態や薄毛・AGA を診断する医療機器ではありません。
+                    薄毛進行そのものや AGA を診断できる医薬・アプリ機能ではなく、頭皮の状態を断定する製品でもありません。
                   </strong>
-                  質感ヒューリスティックであり、結果はエンタメ・ログ用途です。気になるときは皮膚科などの医療機関へ。
+                  質感のみをヒューリスティックで換算しているエンタメ・セルフラグ用途であり、結果はあくまで目安です。
+                  はっきりとした症状や不安がある場合は<strong className="font-semibold text-slate-800">皮膚科・専門医</strong>
+                  で受診されてください。
                 </p>
               </div>
             </div>
@@ -419,7 +449,10 @@ function App() {
       </section>
 
       <footer className="mx-auto mt-12 max-w-md text-center text-[11px] leading-relaxed text-slate-500">
-        「頭頂コンディション」は写真からの質感統計による推定の目安であり、結果に責任を負いません。モデル読み込みは jsDelivr 経由のオープンソース重みファイルを利用します。
+        「頭頂コンディション」は、頭頂部画像の質感のみから算出した<strong className="font-medium text-slate-600">
+          写真ベース・見ための％指標です。
+        </strong>
+        「薄い・濃い」そのものというより、質感側に寄った見えかたに対するカウンターに近く、結果に対する確定的な評価は行いません。オープンモデルの読み込みは jsDelivr 経由の face-api の重みを利用します。
         <br />
         <span className="mt-1 inline-block opacity-85">
           © {new Date().getFullYear()} 頭頂コンディション demo
