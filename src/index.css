@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-display: 'Noto Sans JP', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Noto Sans JP', ui-sans-serif, system-ui, sans-serif;
+  --color-cream: oklch(0.975 0.02 98);
+  --color-teal-soft: oklch(0.93 0.04 210);
+}
+
+html {
+  font-family: var(--font-sans);
+}
+
+body {
+  @apply bg-cream text-slate-800 antialiased min-h-dvh;
+  background-image: radial-gradient(
+      ellipse 120% 80% at 50% -20%,
+      oklch(0.93 0.06 215 / 35%),
+      transparent
+    ),
+    radial-gradient(circle at 100% 100%, oklch(0.94 0.04 200 / 30%), transparent);
+}
