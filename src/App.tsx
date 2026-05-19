@@ -261,20 +261,38 @@ function App() {
             autoPlay
           />
           {camOpen && (
-            <div className="pointer-events-none absolute inset-0 flex flex-col items-center pt-[5%]">
-              <div
-                className="w-[74%] rounded-2xl border-2 border-dashed border-white/55 bg-sky-400/10"
-                style={{ aspectRatio: '5 / 2' }}
-                aria-hidden
-              />
-              <p className="mt-1 text-[11px] font-semibold text-white drop-shadow-md">前髪・生え際</p>
-              <div
-                className="mt-[8%] w-[56%] rounded-[999px] border-2 border-white/60"
-                style={{ aspectRatio: '3 / 4' }}
-                aria-hidden
-              />
-              <p className="mt-1 text-[11px] font-semibold text-white drop-shadow-md">顔（正面）</p>
-            </div>
+            <>
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center pt-[5%] pb-24">
+                <div
+                  className="w-[74%] rounded-2xl border-2 border-dashed border-white/55 bg-sky-400/10"
+                  style={{ aspectRatio: '5 / 2' }}
+                  aria-hidden
+                />
+                <p className="mt-1 text-[11px] font-semibold text-white drop-shadow-md">前髪・生え際</p>
+                <div
+                  className="mt-[8%] w-[56%] rounded-[999px] border-2 border-white/60"
+                  style={{ aspectRatio: '3 / 4' }}
+                  aria-hidden
+                />
+                <p className="mt-1 text-[11px] font-semibold text-white drop-shadow-md">顔（正面）</p>
+              </div>
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/75 via-slate-950/35 to-transparent px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-10">
+                <button
+                  type="button"
+                  disabled={modelsBusy || !!modelError || phase === 'analyzing'}
+                  onClick={captureFromCamera}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(115deg,#3d6bb8_12%,#2d9db0_92%)] px-4 py-4 text-base font-bold text-white shadow-[0_10px_38px_-12px_rgb(61_107_184/62%)] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  <span className="text-xl" aria-hidden>
+                    ✂️
+                  </span>
+                  ふさふさ率を算出
+                </button>
+                <p className="mt-2 text-center text-[11px] font-medium text-white/85">
+                  枠に合わせたら、このボタンをタップ
+                </p>
+              </div>
+            </>
           )}
           {!camOpen && (
             <div className="aspect-[3/4] grid place-items-center bg-gradient-to-b from-slate-100 to-teal-soft/55">
@@ -288,21 +306,23 @@ function App() {
           )}
         </div>
 
-        <div className="mt-4 rounded-xl border border-sky-100/90 bg-sky-50/50 px-4 py-3.5 text-sm leading-relaxed text-slate-600">
-          <p className="font-semibold text-slate-800">📷 カメラで撮るときのコツ</p>
-          <ul className="mt-2 list-disc space-y-1 pl-[1.05rem] text-[13px]">
-            <li>
-              スマホを<strong className="font-medium text-slate-700">目の高さより少し上</strong>
-              に持ち、上の点線枠に前髪・生え際が入るように
-            </li>
-            <li>
-              顔は下の楕円枠に合わせ、<strong className="font-medium text-slate-700">正面のまま</strong>
-              撮る（頭頂部まで写す必要はありません）
-            </li>
-            <li>明るい場所で、窓や照明の正面から撮る</li>
-            <li>「カメラを起動」→ 構図を合わせて「ふさふさ率を算出」を押す</li>
-          </ul>
-        </div>
+        {!camOpen && (
+          <div className="mt-4 rounded-xl border border-sky-100/90 bg-sky-50/50 px-4 py-3.5 text-sm leading-relaxed text-slate-600">
+            <p className="font-semibold text-slate-800">📷 カメラで撮るときのコツ</p>
+            <ul className="mt-2 list-disc space-y-1 pl-[1.05rem] text-[13px]">
+              <li>
+                スマホを<strong className="font-medium text-slate-700">目の高さより少し上</strong>
+                に持ち、上の点線枠に前髪・生え際が入るように
+              </li>
+              <li>
+                顔は下の楕円枠に合わせ、<strong className="font-medium text-slate-700">正面のまま</strong>
+                撮る（頭頂部まで写す必要はありません）
+              </li>
+              <li>明るい場所で、窓や照明の正面から撮る</li>
+              <li>「カメラを起動」→ プレビュー内のボタンで算出</li>
+            </ul>
+          </div>
+        )}
 
         <canvas ref={canvasRef} className="hidden" />
 
@@ -319,17 +339,19 @@ function App() {
             {camOpen ? 'カメラをやり直す' : 'カメラを起動'}
           </button>
 
-          <button
-            type="button"
-            disabled={modelsBusy || !!modelError || phase === 'analyzing'}
-            onClick={captureFromCamera}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(115deg,#3d6bb8_12%,#2d9db0_92%)] px-4 py-3.5 text-sm font-semibold text-white shadow-[0_10px_38px_-12px_rgb(61_107_184/62%)] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-45"
-          >
-            <span className="text-lg" aria-hidden>
-              ✂️
-            </span>
-            ふさふさ率を算出
-          </button>
+          {!camOpen && (
+            <button
+              type="button"
+              disabled={modelsBusy || !!modelError || phase === 'analyzing'}
+              onClick={captureFromCamera}
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(115deg,#3d6bb8_12%,#2d9db0_92%)] px-4 py-3.5 text-sm font-semibold text-white shadow-[0_10px_38px_-12px_rgb(61_107_184/62%)] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              <span className="text-lg" aria-hidden>
+                ✂️
+              </span>
+              ふさふさ率を算出
+            </button>
+          )}
 
           <button
             type="button"
